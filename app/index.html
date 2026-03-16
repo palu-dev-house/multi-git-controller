@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:" />
+  <title>Multi-Git</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Titlebar drag region -->
+  <div class="titlebar">
+    <span class="titlebar-text">Multi-Git</span>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar">
+    <div class="nav-group">
+      <button class="nav-btn active" data-tab="accounts">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Accounts
+      </button>
+      <button class="nav-btn" data-tab="keys">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        SSH Keys
+      </button>
+      <button class="nav-btn" data-tab="repos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Repos
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+    <div class="nav-group nav-bottom">
+      <button class="nav-btn" data-tab="dump">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Dump
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- Accounts Tab -->
+    <section class="tab-content active" id="tab-accounts">
+      <div class="tab-header">
+        <h1>Accounts</h1>
+        <div class="tab-actions">
+          <button class="btn btn-primary" id="btn-run-setup">Run Full Setup</button>
+        </div>
+      </div>
+
+      <div id="accounts-empty" class="empty-state" style="display:none">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <h3>No accounts configured</h3>
+        <p>Add your first Git account to get started.</p>
+      </div>
+
+      <div id="accounts-list" class="card-grid"></div>
+
+      <div class="add-account-form card" id="add-account-form">
+        <h3>Add Account</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Label</label>
+            <input type="text" id="inp-label" placeholder="personal" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="inp-email" placeholder="you@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Provider</label>
+            <select id="inp-host">
+              <option value="github.com">GitHub</option>
+              <option value="gitlab.com">GitLab</option>
+              <option value="bitbucket.org">Bitbucket</option>
+              <option value="codeberg.org">Codeberg</option>
+              <option value="gitea.com">Gitea</option>
+              <option value="sr.ht">SourceHut</option>
+              <option value="dev.azure.com">Azure DevOps</option>
+              <option value="ssh.dev.azure.com">Azure DevOps (SSH)</option>
+              <option value="custom">Custom...</option>
+            </select>
+            <input type="text" id="inp-host-custom" placeholder="git.example.com" style="display:none;margin-top:4px" />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="inp-user" placeholder="your-username" />
+          </div>
+          <div class="form-group form-action">
+            <button class="btn btn-primary" id="btn-add-account">Add</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Keys Tab -->
+    <section class="tab-content" id="tab-keys">
+      <div class="tab-header">
+        <h1>SSH Keys</h1>
+      </div>
+      <div id="keys-list" class="keys-container"></div>
+    </section>
+
+    <!-- Repos Tab -->
+    <section class="tab-content" id="tab-repos">
+      <div class="tab-header">
+        <h1>Repositories</h1>
+        <div class="tab-actions">
+          <button class="btn btn-primary" id="btn-scan-repos">Scan Repos</button>
+          <button class="btn btn-secondary" id="btn-apply-bulk" style="display:none">Apply Selected</button>
+        </div>
+      </div>
+
+      <div id="repos-empty" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <h3>No repos scanned yet</h3>
+        <p>Click "Scan Repos" to find all git repositories on this machine.</p>
+      </div>
+
+      <div id="repos-scanning" style="display:none" class="scan-progress">
+        <div class="scan-progress-header">
+          <span class="spinner" style="width:18px;height:18px;border-width:2px"></span>
+          <span id="scan-phase">Scanning...</span>
+        </div>
+        <div class="scan-progress-bar-wrap">
+          <div class="scan-progress-bar" id="scan-bar" style="width:0%"></div>
+        </div>
+        <div class="scan-progress-detail">
+          <span id="scan-detail">Searching for git repositories...</span>
+          <span id="scan-counter"></span>
+        </div>
+        <div class="scan-log-wrap">
+          <div id="scan-log" class="scan-log"></div>
+        </div>
+      </div>
+
+      <div id="repos-stats" class="repo-stats" style="display:none"></div>
+      <div id="repos-list" class="repo-table-wrap" style="display:none">
+        <table class="repo-table">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="repo-check-all" /></th>
+              <th class="col-name">Repository</th>
+              <th class="col-remote">Remote</th>
+              <th class="col-status">Status</th>
+              <th class="col-account">Account</th>
+            </tr>
+          </thead>
+          <tbody id="repos-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="bulk-result" class="result-box" style="display:none"></div>
+    </section>
+
+    <!-- Settings Tab -->
+    <section class="tab-content" id="tab-settings">
+      <div class="tab-header">
+        <h1>Settings</h1>
+      </div>
+      <div class="settings-grid">
+        <div class="card">
+          <h3>SSH Config</h3>
+          <p class="text-muted">~/.ssh/config</p>
+          <pre id="ssh-config-content" class="code-block"></pre>
+        </div>
+        <div class="card">
+          <h3>Global Git Config</h3>
+          <p class="text-muted">~/.gitconfig</p>
+          <pre id="git-config-content" class="code-block"></pre>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Transfer</h3>
+        <p class="text-muted">Migrate your multi-git setup between machines.</p>
+        <div class="btn-group" style="margin-top:12px">
+          <button class="btn btn-secondary" id="btn-export">Export Settings</button>
+          <button class="btn btn-secondary" id="btn-import">Import Settings</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dump Tab -->
+    <section class="tab-content" id="tab-dump">
+      <div class="tab-header">
+        <h1>Settings Dump</h1>
+        <div class="tab-actions">
+          <button class="btn btn-ghost" id="btn-refresh-dump">Refresh</button>
+        </div>
+      </div>
+      <pre id="dump-content" class="code-block code-block-full"></pre>
+    </section>
+
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

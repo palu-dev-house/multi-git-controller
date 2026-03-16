@@ -1,0 +1,21 @@
+# =============================================================================
+# Multi-Git Accounts Configuration
+# =============================================================================
+# Copy this file to accounts.conf and edit with your real accounts.
+#   cp accounts.conf.example accounts.conf
+#
+# Format: LABEL|EMAIL|GIT_HOST|GIT_USER
+#   LABEL    — unique identifier (used for key filenames + SSH host alias)
+#   EMAIL    — email tied to this git account
+#   GIT_HOST — github.com, gitlab.com, bitbucket.org, etc.
+#   GIT_USER — your git username for this account
+#
+# Rules:
+#   - One account per line
+#   - Lines starting with # are ignored
+#   - No spaces around the | delimiter
+# =============================================================================
+
+personal|you@personal.com|github.com|your-username
+work|you@company.com|github.com|your-work-username
+# freelance|you@freelance.com|gitlab.com|your-freelance-username
