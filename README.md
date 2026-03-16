@@ -4,6 +4,12 @@ Manage multiple SSH keys and Git accounts across GitHub, GitLab, Bitbucket and o
 
 Includes a CLI and an Electron desktop app.
 
+## Preview
+
+| Accounts | Repos |
+|----------|-------|
+| ![Accounts Tab](screenshots/accounts-tab.png) | ![Repos Tab](screenshots/repos-tab.png) |
+
 ---
 
 ## Download
