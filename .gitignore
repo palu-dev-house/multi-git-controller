@@ -3,6 +3,5 @@ accounts.conf
 
 # Electron app
 app/node_modules/
-app/package-lock.json
 app/dist/
 app/build/
