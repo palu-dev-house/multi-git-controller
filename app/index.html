@@ -41,31 +41,30 @@
       <h3>Add Account</h3>
       <div class="form-row">
         <div class="form-group">
-          <label>ID</label>
-          <input type="text" id="inp-id" placeholder="github-personal" />
-          <span class="form-hint">Unique identifier (a-z, 0-9, -)</span>
-        </div>
-        <div class="form-group">
-          <label>Display Name</label>
-          <input type="text" id="inp-label" placeholder="GitHub Personal" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
           <label>Email</label>
           <input type="email" id="inp-email" placeholder="you@email.com" />
         </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="inp-username" placeholder="your-username" />
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label>Provider</label>
           <select id="inp-provider">
             <option value="github">GitHub</option>
             <option value="bitbucket">Bitbucket</option>
             <option value="gitlab">GitLab</option>
+            <option value="codeberg">Codeberg</option>
+            <option value="gitea">Gitea</option>
+            <option value="sourcehut">SourceHut</option>
+            <option value="azure">Azure DevOps</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="inp-username" placeholder="your-username" />
+          <label>Label</label>
+          <input type="text" id="inp-label" placeholder="e.g. Work, Personal (optional)" />
         </div>
       </div>
       <button class="btn btn-primary" id="btn-add">Add Account</button>

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, clipboard } = require("electron");
+const { app, BrowserWindow, ipcMain, clipboard, Tray, Menu, Notification, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -13,6 +13,7 @@ const DEFAULT_PUB = path.join(SSH_DIR, "id_ed25519.pub");
 
 let DATA_FILE;
 let mainWindow;
+let tray;
 
 function getDataFile() {
   if (!DATA_FILE) {
@@ -38,10 +39,36 @@ function createWindow() {
     },
   });
   mainWindow.loadFile(path.join(__dirname, "index.html"));
+
+  mainWindow.on("close", (e) => {
+    if (!app.isQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
+  });
 }
 
-app.whenReady().then(createWindow);
-app.on("window-all-closed", () => app.quit());
+app.whenReady().then(() => {
+  createWindow();
+  createTray();
+});
+
+app.on("before-quit", () => {
+  app.isQuitting = true;
+});
+
+app.on("window-all-closed", () => {
+  // Keep running in tray
+});
+
+app.on("activate", () => {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Data helpers
@@ -75,6 +102,124 @@ function ensureSSHDir() {
   if (!fs.existsSync(SSH_DIR)) {
     fs.mkdirSync(SSH_DIR, { mode: 0o700, recursive: true });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Tray
+// ---------------------------------------------------------------------------
+function getActiveAccount() {
+  if (!fs.existsSync(DEFAULT_PUB)) return null;
+  try {
+    const currentPub = fs.readFileSync(DEFAULT_PUB, "utf-8").trim();
+    const data = readData();
+    for (const acc of data.accounts) {
+      if (fs.existsSync(pubKeyPath(acc.id))) {
+        const accPub = fs.readFileSync(pubKeyPath(acc.id), "utf-8").trim();
+        if (currentPub === accPub) return acc;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function switchKeyFiles(id) {
+  const src = keyPath(id);
+  const srcPub = pubKeyPath(id);
+  if (!fs.existsSync(src) || !fs.existsSync(srcPub)) return false;
+  try {
+    fs.copyFileSync(src, DEFAULT_KEY);
+    fs.copyFileSync(srcPub, DEFAULT_PUB);
+    try { fs.chmodSync(DEFAULT_KEY, 0o600); } catch {}
+    try { fs.chmodSync(DEFAULT_PUB, 0o644); } catch {}
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function setGitIdentity(username, email) {
+  try {
+    await execAsync(`git config --global user.name "${username}"`);
+    await execAsync(`git config --global user.email "${email}"`);
+  } catch {}
+}
+
+function refreshTray() {
+  if (!tray) return;
+  const data = readData();
+  const active = getActiveAccount();
+  const activeId = active ? active.id : null;
+
+  const accountItems = data.accounts.map((acc) => ({
+    label: `${acc.label} (${acc.provider})`,
+    type: "checkbox",
+    checked: acc.id === activeId,
+    enabled: fs.existsSync(keyPath(acc.id)),
+    click: async () => {
+      if (!switchKeyFiles(acc.id)) return;
+      await setGitIdentity(acc.username, acc.email);
+      new Notification({
+        title: "SSH Key Switched",
+        body: `Now using: ${acc.label} (${acc.username} <${acc.email}>)`,
+      }).show();
+      refreshTray();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("account-switched");
+      }
+    },
+  }));
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: active ? `Active: ${active.label}` : "No account active",
+      enabled: false,
+    },
+    { type: "separator" },
+    ...(accountItems.length > 0
+      ? accountItems
+      : [{ label: "No accounts configured", enabled: false }]),
+    { type: "separator" },
+    {
+      label: "Open App",
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        } else {
+          createWindow();
+        }
+      },
+    },
+    { type: "separator" },
+    {
+      label: "Quit",
+      click: () => {
+        app.isQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(menu);
+  tray.setToolTip(
+    active ? `Active: ${active.label}` : "Multi-Git Controller"
+  );
+}
+
+function createTray() {
+  const iconName =
+    process.platform === "darwin" ? "tray-iconTemplate.png" : "tray-icon.png";
+  const iconPath = path.join(__dirname, iconName);
+  tray = new Tray(iconPath);
+  tray.on("click", () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
+      createWindow();
+    }
+  });
+  refreshTray();
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +271,7 @@ ipcMain.handle("add-account", (_, account) => {
     username: account.username,
   });
   writeData(data);
+  refreshTray();
   return { ok: true };
 });
 
@@ -138,6 +284,7 @@ ipcMain.handle("remove-account", (_, id) => {
     if (fs.existsSync(keyPath(id))) fs.unlinkSync(keyPath(id));
     if (fs.existsSync(pubKeyPath(id))) fs.unlinkSync(pubKeyPath(id));
   } catch {}
+  refreshTray();
   return { ok: true };
 });
 
@@ -166,6 +313,7 @@ ipcMain.handle("generate-key", async (_, id, email) => {
       if (code === 0) {
         try { fs.chmodSync(kp, 0o600); } catch {}
         try { fs.chmodSync(kp + ".pub", 0o644); } catch {}
+        refreshTray();
         resolve({ ok: true, message: "SSH key generated" });
       } else {
         resolve({ ok: false, message: stderr || stdout || `Exit code ${code}` });
@@ -182,23 +330,24 @@ ipcMain.handle("generate-key", async (_, id, email) => {
 });
 
 // Switch active SSH key — copies account key to ~/.ssh/id_ed25519
-ipcMain.handle("switch-account", (_, id) => {
-  const src = keyPath(id);
-  const srcPub = pubKeyPath(id);
-
-  if (!fs.existsSync(src) || !fs.existsSync(srcPub)) {
+ipcMain.handle("switch-account", async (_, id) => {
+  if (!fs.existsSync(keyPath(id)) || !fs.existsSync(pubKeyPath(id))) {
     return { ok: false, message: "Key not found. Generate a key first." };
   }
 
-  try {
-    fs.copyFileSync(src, DEFAULT_KEY);
-    fs.copyFileSync(srcPub, DEFAULT_PUB);
-    try { fs.chmodSync(DEFAULT_KEY, 0o600); } catch {}
-    try { fs.chmodSync(DEFAULT_PUB, 0o644); } catch {}
-    return { ok: true, message: `Switched to ${id}` };
-  } catch (err) {
-    return { ok: false, message: err.message };
+  if (!switchKeyFiles(id)) {
+    return { ok: false, message: "Failed to copy key files" };
   }
+
+  const data = readData();
+  const acc = data.accounts.find((a) => a.id === id);
+  if (acc) await setGitIdentity(acc.username, acc.email);
+  new Notification({
+    title: "SSH Key Switched",
+    body: `Now using: ${acc ? `${acc.label} (${acc.username} <${acc.email}>)` : id}`,
+  }).show();
+  refreshTray();
+  return { ok: true, message: `Switched to ${acc ? acc.label : id}` };
 });
 
 // Test SSH connection
@@ -207,6 +356,10 @@ ipcMain.handle("test-ssh", async (_, provider) => {
     github: "github.com",
     bitbucket: "bitbucket.org",
     gitlab: "gitlab.com",
+    codeberg: "codeberg.org",
+    gitea: "gitea.com",
+    sourcehut: "sr.ht",
+    azure: "ssh.dev.azure.com",
   };
   const host = hosts[provider] || provider;
 
@@ -231,7 +384,8 @@ function isSSHSuccess(output) {
     lower.includes("authenticated via ssh key") ||
     lower.includes("you can use git") ||
     lower.includes("welcome to gitlab") ||
-    lower.includes("logged in as")
+    lower.includes("logged in as") ||
+    lower.includes("shell request was successful")
   );
 }
 

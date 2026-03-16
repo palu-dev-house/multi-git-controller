@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld("api", {
   switchAccount: (id) => ipcRenderer.invoke("switch-account", id),
   testSSH: (provider) => ipcRenderer.invoke("test-ssh", provider),
   copyToClipboard: (text) => ipcRenderer.invoke("copy-to-clipboard", text),
+  onAccountSwitched: (callback) => ipcRenderer.on("account-switched", callback),
 });

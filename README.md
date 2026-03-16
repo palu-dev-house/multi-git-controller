@@ -1,27 +1,35 @@
 # Multi-Git Controller
 
-Switch SSH keys between your Git accounts with one click.
+Switch SSH keys and Git identity between multiple accounts with one click. Built for developers who juggle multiple GitHub, Bitbucket, GitLab, and other Git provider accounts.
 
-Manage multiple GitHub and Bitbucket accounts on the same machine without manually editing `~/.ssh` files.
+## Features
 
-## How It Works
-
-1. **Add your accounts** — register each Git account (GitHub, Bitbucket, GitLab)
-2. **Generate SSH keys** — the app creates a unique ed25519 key pair per account
-3. **Copy the public key** — add it to your Git provider's SSH settings
-4. **Switch with one click** — select an account and the app activates its SSH key
-
-When you switch accounts, the app copies the selected key to `~/.ssh/id_ed25519`, so all Git operations use the correct identity.
+- **One-click SSH key switching** — Activate any account and `~/.ssh/id_ed25519` is updated instantly
+- **Auto Git identity** — `git config --global user.name` and `user.email` update on switch to prevent unverified commits
+- **System tray** — Switch accounts from the menu bar without opening the app
+- **Native notifications** — Get notified when the active account changes
+- **Auto SSH key generation** — Keys are generated automatically when you add an account
+- **Multi-provider support** — GitHub, Bitbucket, GitLab, Codeberg, Gitea, SourceHut, Azure DevOps
+- **SSH connection test** — Verify your key works with each provider
+- **Copy public key** — One click to copy for adding to your provider
+- **Cross-platform** — macOS, Windows, Linux
 
 ## Download
 
-Go to the [Releases](https://github.com/palu-dev-house/multi-git-controller/releases) page and download the latest version for your platform:
+Download the latest release from the [Releases](https://github.com/palu-dev-house/multi-git-controller/releases) page:
 
-| Platform | File |
-|----------|------|
-| macOS    | `.dmg` or `.zip` |
-| Windows  | `.exe` (installer) or portable `.exe` |
-| Linux    | `.AppImage` or `.deb` |
+| Platform | Format |
+|----------|--------|
+| macOS | `.dmg`, `.zip` |
+| Windows | `.exe` (installer), `.exe` (portable) |
+| Linux | `.AppImage`, `.deb` |
+
+## How It Works
+
+1. **Add an account** — Enter your email, username, select provider, and optionally add a label
+2. **SSH key is auto-generated** — An ed25519 key pair is created at `~/.ssh/git_<provider>-<username>`
+3. **Copy the public key** — Add it to your Git provider (GitHub/Bitbucket/GitLab settings)
+4. **Activate** — Click "Activate" or switch from the system tray. The app copies the key to `~/.ssh/id_ed25519` and updates your global Git config
 
 ## Development
 
@@ -34,6 +42,7 @@ npm start
 ### Build locally
 
 ```bash
+cd app
 npm run build:mac     # macOS — .dmg + .zip
 npm run build:win     # Windows — .exe (NSIS + portable)
 npm run build:linux   # Linux — .AppImage + .deb
@@ -41,15 +50,24 @@ npm run build:linux   # Linux — .AppImage + .deb
 
 ## Release
 
-Push a version tag to trigger the build workflow:
+Releases are automated with [semantic-release](https://github.com/semantic-release/semantic-release). Push to `main` with [conventional commits](https://www.conventionalcommits.org/) and the GitHub Action will:
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+1. Build for macOS, Windows, and Linux
+2. Create a GitHub Release with version and changelog
+3. Attach all platform binaries as download links
 
-The GitHub Action builds for all platforms and creates a release with download links.
+### Commit prefixes
+
+| Prefix | Release |
+|--------|---------|
+| `feat:` | Minor (1.x.0) |
+| `fix:` | Patch (1.0.x) |
+| `feat!:` or `BREAKING CHANGE:` | Major (x.0.0) |
 
 ## License
 
 MIT
+
+---
+
+Built by [Ferdy](https://paludevhouse.site) at [Palu Dev House](https://paludevhouse.site)

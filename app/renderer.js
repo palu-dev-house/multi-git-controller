@@ -183,36 +183,46 @@ document.addEventListener("click", async (e) => {
 // Add account
 // ---------------------------------------------------------------------------
 document.getElementById("btn-add").addEventListener("click", async () => {
-  const id = document.getElementById("inp-id").value.trim();
-  const label = document.getElementById("inp-label").value.trim();
   const email = document.getElementById("inp-email").value.trim();
-  const provider = document.getElementById("inp-provider").value;
   const username = document.getElementById("inp-username").value.trim();
+  const provider = document.getElementById("inp-provider").value;
+  const labelInput = document.getElementById("inp-label").value.trim();
 
-  if (!id || !label || !email || !username) {
-    toast("All fields are required", "fail");
+  if (!email || !username) {
+    toast("Email and Username are required", "fail");
     return;
   }
 
-  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    toast("ID must be alphanumeric (a-z, 0-9, -, _)", "fail");
-    return;
-  }
+  const id = `${provider}-${username}`.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+  const label = labelInput || `${provider} (${username})`;
+
+  const addBtn = document.getElementById("btn-add");
+  addBtn.innerHTML = '<span class="spinner"></span> Adding...';
+  addBtn.disabled = true;
 
   const result = await window.api.addAccount({ id, label, email, provider, username });
   if (!result.ok) {
     toast(result.message, "fail");
+    addBtn.textContent = "Add Account";
+    addBtn.disabled = false;
     return;
   }
 
-  // Clear form
-  document.getElementById("inp-id").value = "";
-  document.getElementById("inp-label").value = "";
-  document.getElementById("inp-email").value = "";
-  document.getElementById("inp-provider").value = "github";
-  document.getElementById("inp-username").value = "";
-
   toast(`Added: ${label}`, "ok");
+
+  // Auto-generate SSH key
+  addBtn.innerHTML = '<span class="spinner"></span> Generating SSH key...';
+  const keyResult = await window.api.generateKey(id, email);
+  toast(keyResult.message, keyResult.ok ? "ok" : "fail");
+
+  // Clear form
+  document.getElementById("inp-email").value = "";
+  document.getElementById("inp-username").value = "";
+  document.getElementById("inp-provider").value = "github";
+  document.getElementById("inp-label").value = "";
+
+  addBtn.textContent = "Add Account";
+  addBtn.disabled = false;
   await load();
 });
 
@@ -233,3 +243,6 @@ function attr(str) {
 // Init
 // ---------------------------------------------------------------------------
 load();
+
+// Refresh UI when account is switched from system tray
+window.api.onAccountSwitched(() => load());

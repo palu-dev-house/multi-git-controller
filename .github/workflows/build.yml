@@ -2,11 +2,14 @@ name: Build & Release
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   build:
@@ -58,24 +61,34 @@ jobs:
 
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    name: Create Release
+    name: Semantic Release
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
 
       - name: List artifacts
-        run: find artifacts -type f | head -20
+        run: find artifacts -type f 2>/dev/null | head -20 || echo "No artifacts"
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/**/*
-          draft: false
-          generate_release_notes: true
+      - name: Semantic Release
+        working-directory: app
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
